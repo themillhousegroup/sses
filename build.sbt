@@ -7,11 +7,14 @@ scalaVersion := "2.11.7"
 
 organization := "com.themillhousegroup"
 
+val targetPlayVersion = "2.5.12"
+
+
 libraryDependencies ++= Seq(
-    "ch.qos.logback"              %   "logback-classic"       % "1.1.5",
-    "com.typesafe.scala-logging"  %%  "scala-logging"         % "3.1.0",
-    "org.mockito"                 %   "mockito-all"           % "1.10.19"       % "test",
-    "org.specs2"                  %%  "specs2"                % "2.3.13"      % "test"
+  "com.typesafe.play"           %%  "play"                  % targetPlayVersion       % "provided",
+  "com.typesafe.play"           %%  "play-specs2"           % targetPlayVersion       % "test",
+  "ch.qos.logback"              %   "logback-classic"       % "1.1.5",
+  "com.typesafe.scala-logging"  %%  "scala-logging"         % "3.1.0"
 )
 
 resolvers ++= Seq(  "oss-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
