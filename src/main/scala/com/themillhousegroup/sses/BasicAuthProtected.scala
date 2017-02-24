@@ -11,28 +11,27 @@ class BasicAuthProtected[R <: Request[_]] (val requiredPassword:String) extends 
   private lazy val challenge = Future.successful(Some(unauthResult))
 
   //need the space at the end
-  private lazy val basicSt = "basic "
+  private lazy val basicPrefix = "basic "
+
 
   private def decodeBasicAuth(auth: String): Option[(String, String)] = {
-    if (auth.length() < basicSt.length()) {
+    if ((auth.length < basicPrefix.length) || (!auth.startsWith(basicPrefix))) {
       None
     } else {
-      val basicReqSt = auth.substring(0, basicSt.length())
-      if (basicReqSt.toLowerCase() != basicSt) {
-        None
-      } else {
-        val basicAuthSt = auth.replaceFirst(basicReqSt, "")
-        //BASE64Decoder is not thread safe, don't make it a field of this object
-        val decoder = new BASE64Decoder()
-        val decodedAuthSt = new String(decoder.decodeBuffer(basicAuthSt), "UTF-8")
-        val usernamePassword = decodedAuthSt.split(":")
-        if (usernamePassword.length >= 2) {
-          //account for ":" in passwords
-          Some(usernamePassword(0), usernamePassword.splitAt(1)._2.mkString)
-        } else {
-          None
-        }
-      }
+      extractEncodedAuthString(auth.replaceFirst(basicPrefix, ""))
+    }
+  }
+
+  private def extractEncodedAuthString(basicAuthSt:String) = {
+    //BASE64Decoder is not thread safe, don't make it a field of this object
+    val decoder = new BASE64Decoder()
+    val decodedAuthSt = new String(decoder.decodeBuffer(basicAuthSt), "UTF-8")
+    val usernamePassword = decodedAuthSt.split(":")
+    if (usernamePassword.length >= 2) {
+      //account for ":" in passwords
+      Some(usernamePassword(0), usernamePassword.splitAt(1)._2.mkString)
+    } else {
+      None
     }
   }
 
