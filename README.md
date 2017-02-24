@@ -2,8 +2,9 @@ sses
 ============================
 
 This is a very simple implementation of Basic Authentication so that you can put
-a username and password challenge on a Play Framework endpoint with one line of code.
+a username and/or password challenge on a Play Framework endpoint with one line of code.
 
+If you're looking for a dead-simple way to protect an endpoint or HTML page from intruders, and don't mind having the credentials stored in your code, this (together with using an HTTPS connection) is probably "good enough".
 
 
 ### Installation
