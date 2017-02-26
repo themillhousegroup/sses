@@ -5,7 +5,7 @@ import sun.misc.BASE64Decoder
 
 import scala.concurrent.Future
 
-class BasicAuthProtected[R <: Request[_]] (val requiredPassword:String) extends ActionBuilder[Request] with ActionFilter[Request] {
+class BasicAuthProtected[R <: Request[_]]( credentialMatcher: (String, String) => Boolean) extends ActionBuilder[Request] with ActionFilter[Request] {
 
   private lazy val unauthResult = Results.Unauthorized.withHeaders(("WWW-Authenticate", "Basic realm=\"myRealm\""))
   private lazy val challenge = Future.successful(Some(unauthResult))
@@ -42,7 +42,7 @@ class BasicAuthProtected[R <: Request[_]] (val requiredPassword:String) extends 
       decodeBasicAuth(basicAuth).fold[Future[Option[Result]]] {
         challenge
       } { case (user, pass) =>
-        if (pass == requiredPassword) {
+        if (credentialMatcher(user, pass)) {
           Future.successful[Option[Result]](None)
         } else {
           challenge
@@ -52,8 +52,32 @@ class BasicAuthProtected[R <: Request[_]] (val requiredPassword:String) extends 
   }
 }
 
-object BasicAuthProtected {
-  def apply[A, R[A] <: Request[A]](password: String):ActionBuilder[Request] = {
-    new BasicAuthProtected[R[A]](password)
+object UsernameProtected {
+  def apply[A, R[A] <: Request[A]](requiredUsername: String):ActionBuilder[Request] = {
+
+    def matcher(username:String, password:String) = username == requiredUsername
+
+    new BasicAuthProtected[R[A]](matcher)
+  }
+}
+
+object PasswordProtected {
+  def apply[A, R[A] <: Request[A]](requiredPassword: String):ActionBuilder[Request] = {
+
+    def matcher(username:String, password:String) = password == requiredPassword
+
+    new BasicAuthProtected[R[A]](matcher)
+  }
+}
+
+object UsernamePasswordProtected {
+  def apply[A, R[A] <: Request[A]](requiredUsername: String, requiredPassword: String):ActionBuilder[Request] = {
+
+    def matcher(username:String, password:String) = {
+      username == requiredUsername &&
+      password == requiredPassword
+    }
+
+    new BasicAuthProtected[R[A]](matcher)
   }
 }

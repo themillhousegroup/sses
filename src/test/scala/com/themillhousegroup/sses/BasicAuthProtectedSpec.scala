@@ -73,7 +73,7 @@ class BasicAuthProtectedSpec extends PlaySpecification {
 
     "allow sync endpoint, no request" in {
       val c = new Controller {
-        val endpoint = BasicAuthProtected(testPassword) {
+        val endpoint = PasswordProtected(testPassword) {
           Ok("ok")
         }
       }
@@ -83,7 +83,7 @@ class BasicAuthProtectedSpec extends PlaySpecification {
 
     "allow sync endpoint, request" in {
       val c = new Controller {
-        val endpoint = BasicAuthProtected(testPassword) { request =>
+        val endpoint = PasswordProtected(testPassword) { request =>
           Ok("ok")
         }
       }
@@ -93,7 +93,7 @@ class BasicAuthProtectedSpec extends PlaySpecification {
 
     "allow async endpoint, no request" in {
       val c = new Controller {
-        val endpoint = BasicAuthProtected(testPassword).async {
+        val endpoint = PasswordProtected(testPassword).async {
           Future.successful(Ok("ok"))
         }
       }
@@ -103,7 +103,93 @@ class BasicAuthProtectedSpec extends PlaySpecification {
 
     "allow async endpoint, request" in {
       val c = new Controller {
-        val endpoint = BasicAuthProtected(testPassword).async { request =>
+        val endpoint = PasswordProtected(testPassword).async { request =>
+          Future.successful(Ok("ok"))
+        }
+      }
+
+      verifyEndpoint(c.endpoint)
+    }
+  }
+
+  "Basic Auth Protection (username-only protection)" should {
+
+    "allow sync endpoint, no request" in {
+      val c = new Controller {
+        val endpoint = UsernameProtected(testUsername) {
+          Ok("ok")
+        }
+      }
+
+      verifyEndpoint(c.endpoint)
+    }
+
+    "allow sync endpoint, request" in {
+      val c = new Controller {
+        val endpoint = UsernameProtected(testUsername) { request =>
+          Ok("ok")
+        }
+      }
+
+      verifyEndpoint(c.endpoint)
+    }
+
+    "allow async endpoint, no request" in {
+      val c = new Controller {
+        val endpoint = UsernameProtected(testUsername).async {
+          Future.successful(Ok("ok"))
+        }
+      }
+
+      verifyEndpoint(c.endpoint)
+    }
+
+    "allow async endpoint, request" in {
+      val c = new Controller {
+        val endpoint = UsernameProtected(testUsername).async { request =>
+          Future.successful(Ok("ok"))
+        }
+      }
+
+      verifyEndpoint(c.endpoint)
+    }
+  }
+
+  "Basic Auth Protection (username-and-password  protection)" should {
+
+    "allow sync endpoint, no request" in {
+      val c = new Controller {
+        val endpoint = UsernamePasswordProtected(testUsername, testPassword) {
+          Ok("ok")
+        }
+      }
+
+      verifyEndpoint(c.endpoint)
+    }
+
+    "allow sync endpoint, request" in {
+      val c = new Controller {
+        val endpoint = UsernamePasswordProtected(testUsername, testPassword) { request =>
+          Ok("ok")
+        }
+      }
+
+      verifyEndpoint(c.endpoint)
+    }
+
+    "allow async endpoint, no request" in {
+      val c = new Controller {
+        val endpoint = UsernamePasswordProtected(testUsername, testPassword).async {
+          Future.successful(Ok("ok"))
+        }
+      }
+
+      verifyEndpoint(c.endpoint)
+    }
+
+    "allow async endpoint, request" in {
+      val c = new Controller {
+        val endpoint = UsernamePasswordProtected(testUsername, testPassword).async { request =>
           Future.successful(Ok("ok"))
         }
       }
