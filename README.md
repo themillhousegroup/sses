@@ -4,7 +4,7 @@ sses
 This is a very simple implementation of Basic Authentication so that you can put
 a username and/or password challenge on a Play Framework endpoint with one line of code.
 
-If you're looking for a dead-simple way to protect an endpoint or HTML page from intruders, and don't mind having the credentials stored in your code, this (together with using an HTTPS connection) is probably "good enough".
+If you're looking for a dead-simple way to protect an endpoint or HTML page from intruders (or possibly just making sure Google can't index your page), and don't mind having the credentials stored in your code, this (together with using an HTTPS connection) is probably "good enough". Use is at your own risk, of course.
 
 
 ### Installation
@@ -22,7 +22,7 @@ Bring in the library by adding the following to your ```build.sbt```.
 
 ```
    libraryDependencies ++= Seq(
-     "com.themillhousegroup" %% "sses" % "0.1.0"
+     "com.themillhousegroup" %% "sses" % "0.1.3"
    )
 
 ```
@@ -56,6 +56,30 @@ def storeBaz = Action.async(parse.json) { request =>
 ```
 
 Add the import, and your desired protection (username-only, password-only or both). You can still use all of the nice `Action` features like `.async` and `(parse.json)` etc:
+
+```
+import com.themillhousegroup.sses._
+
+
+def showFoo(fooId: String) = UsernameProtected("dave") {
+
+  // Some code, returning a Result
+  ...
+}
+
+def showBar(barId: String) = PasswordProtected("s3cr3t").async {
+
+  // Some asynchronous code, returning a Future[Result]
+  ...
+}
+
+def storeBaz = UsernamePasswordProtected("dave", "s3cr3t").async(parse.json) { request =>
+
+  // Some asynchronous code that parses the request body into JSON, 
+  // returning a Future[Result]
+  ...
+}
+```
 
 
 
