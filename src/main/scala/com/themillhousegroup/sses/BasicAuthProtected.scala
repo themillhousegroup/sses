@@ -22,7 +22,7 @@ object BasicAuthProtected {
   }
 
   def decodeBasicAuth(auth: String): Option[(String, String)] = {
-    if ((auth.length < basicPrefix.length) || (!auth.startsWith(basicPrefix))) {
+    if ((auth.length < basicPrefix.length) || (!auth.toLowerCase.startsWith(basicPrefix))) {
       None
     } else {
       extractEncodedAuthString(auth.replaceFirst(basicPrefix, ""))
