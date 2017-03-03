@@ -5,16 +5,23 @@ import sun.misc.BASE64Decoder
 
 import scala.concurrent.Future
 
-class BasicAuthProtected[R <: Request[_]]( credentialMatcher: (String, String) => Boolean) extends ActionBuilder[Request] with ActionFilter[Request] {
-
+object BasicAuthProtected {
   private lazy val unauthResult = Results.Unauthorized.withHeaders(("WWW-Authenticate", "Basic realm=\"myRealm\""))
   private lazy val challenge = Future.successful(Some(unauthResult))
 
   //need the space at the end
-  private lazy val basicPrefix = "basic "
+  private val basicPrefix = "basic "
+  private val authnHeaderNames = Set("authorization", "Authorization")
 
+  def withAuthnHeader(request:Request[_]):Option[String] = {
+    val maybeFoundHeaderName = request.headers.keys.intersect(authnHeaderNames).headOption
 
-  private def decodeBasicAuth(auth: String): Option[(String, String)] = {
+    maybeFoundHeaderName.flatMap { authnHeaderName =>
+      request.headers.get(authnHeaderName)
+    }
+  }
+
+  def decodeBasicAuth(auth: String): Option[(String, String)] = {
     if ((auth.length < basicPrefix.length) || (!auth.startsWith(basicPrefix))) {
       None
     } else {
@@ -22,7 +29,7 @@ class BasicAuthProtected[R <: Request[_]]( credentialMatcher: (String, String) =
     }
   }
 
-  private def extractEncodedAuthString(basicAuthSt:String) = {
+  private def extractEncodedAuthString(basicAuthSt:String): Option[(String, String)] = {
     //BASE64Decoder is not thread safe, don't make it a field of this object
     val decoder = new BASE64Decoder()
     val decodedAuthSt = new String(decoder.decodeBuffer(basicAuthSt), "UTF-8")
@@ -34,9 +41,14 @@ class BasicAuthProtected[R <: Request[_]]( credentialMatcher: (String, String) =
       None
     }
   }
+}
+
+class BasicAuthProtected[R <: Request[_]]( credentialMatcher: (String, String) => Boolean) extends ActionBuilder[Request] with ActionFilter[Request] {
+
+  import BasicAuthProtected._
 
   protected def filter[A](request: Request[A]): Future[Option[Result]] = {
-    request.headers.get("authorization").fold[Future[Option[Result]]] {
+    withAuthnHeader(request).fold[Future[Option[Result]]] {
       challenge
     } { basicAuth =>
       decodeBasicAuth(basicAuth).fold[Future[Option[Result]]] {

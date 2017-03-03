@@ -47,6 +47,18 @@ class BasicAuthProtectedSpec extends PlaySpecification {
     result.header.headers.get("WWW-Authenticate") must beNone
   }
 
+  def verifyGetsAllowedUpperCaseAuthorizationHeader(endpoint: Action[AnyContent], auth: String) = {
+    val req = FakeRequest().withHeaders(
+      "Authorization" -> auth
+    )
+    val fResult: Future[Result] = endpoint.apply(req)
+    val result: Result = Await.result(fResult, timeout)
+    result must not beNull
+
+    result.header.status must beEqualTo(200)
+    result.header.headers.get("WWW-Authenticate") must beNone
+  }
+
   def verifyEndpoint(endpoint: Action[AnyContent]) = {
     endpoint must not beNull
 
@@ -67,6 +79,7 @@ class BasicAuthProtectedSpec extends PlaySpecification {
 
     val twoPartsGood = encoder.encode(s"$testUsername:$testPassword".getBytes)
     verifyGetsAllowed(endpoint, s"basic $twoPartsGood")
+    verifyGetsAllowedUpperCaseAuthorizationHeader(endpoint, s"basic $twoPartsGood")
   }
 
   "Basic Auth Protection (password-only protection)" should {
