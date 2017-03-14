@@ -22,7 +22,7 @@ Bring in the library by adding the following to your ```build.sbt```.
 
 ```
    libraryDependencies ++= Seq(
-     "com.themillhousegroup" %% "sses" % "0.1.6"
+     "com.themillhousegroup" %% "sses" % "0.1.9"
    )
 
 ```
