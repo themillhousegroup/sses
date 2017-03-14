@@ -25,7 +25,7 @@ object BasicAuthProtected {
     if ((auth.length < basicPrefix.length) || (!auth.toLowerCase.startsWith(basicPrefix))) {
       None
     } else {
-      extractEncodedAuthString(auth.replaceFirst(basicPrefix, ""))
+      extractEncodedAuthString(auth.drop(basicPrefix.length))
     }
   }
 

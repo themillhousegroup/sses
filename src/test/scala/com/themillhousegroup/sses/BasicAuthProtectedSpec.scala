@@ -80,6 +80,9 @@ class BasicAuthProtectedSpec extends PlaySpecification {
     val twoPartsGood = encoder.encode(s"$testUsername:$testPassword".getBytes)
     verifyGetsAllowed(endpoint, s"basic $twoPartsGood")
     verifyGetsAllowedUpperCaseAuthorizationHeader(endpoint, s"basic $twoPartsGood")
+
+    verifyGetsAllowed(endpoint, s"Basic $twoPartsGood")
+    verifyGetsAllowedUpperCaseAuthorizationHeader(endpoint, s"Basic $twoPartsGood")
   }
 
   "Basic Auth Protection (password-only protection)" should {
