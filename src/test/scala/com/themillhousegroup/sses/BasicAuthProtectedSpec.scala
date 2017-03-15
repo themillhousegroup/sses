@@ -1,5 +1,7 @@
 package com.themillhousegroup.sses
 
+import org.specs2.execute.ResultLike
+import org.specs2.matcher.MatchResult
 import play.api.test._
 import play.api.mvc._
 import sun.misc.BASE64Encoder
@@ -59,7 +61,8 @@ class BasicAuthProtectedSpec extends PlaySpecification {
     result.header.headers.get("WWW-Authenticate") must beNone
   }
 
-  def verifyEndpoint(endpoint: Action[AnyContent]) = {
+  def verifyEndpoint(endpoint: Action[AnyContent],
+    extraChecks: (Action[AnyContent], BASE64Encoder) => MatchResult[_]) = {
     endpoint must not beNull
 
     verifyWithNoAuthInRequest(endpoint)
@@ -71,21 +74,27 @@ class BasicAuthProtectedSpec extends PlaySpecification {
     val zeroParts = encoder.encode("nope".getBytes)
     verifyWithBadAuthInRequest(endpoint, s"basic $zeroParts")
 
-    val onePart = encoder.encode("nope:".getBytes)
-    verifyWithBadAuthInRequest(endpoint, s"basic $onePart")
+    val userPartBad = encoder.encode("baduser:".getBytes)
+    verifyWithBadAuthInRequest(endpoint, s"basic $userPartBad")
 
-    val twoPartsBad = encoder.encode("nope:badpass".getBytes)
+    val passPartBad = encoder.encode(":badpass".getBytes)
+    verifyWithBadAuthInRequest(endpoint, s"basic $passPartBad")
+
+    val twoPartsBad = encoder.encode("baduser:badpass".getBytes)
     verifyWithBadAuthInRequest(endpoint, s"basic $twoPartsBad")
 
-    val twoPartsGood = encoder.encode(s"$testUsername:$testPassword".getBytes)
-    verifyGetsAllowed(endpoint, s"basic $twoPartsGood")
-    verifyGetsAllowedUpperCaseAuthorizationHeader(endpoint, s"basic $twoPartsGood")
-
-    verifyGetsAllowed(endpoint, s"Basic $twoPartsGood")
-    verifyGetsAllowedUpperCaseAuthorizationHeader(endpoint, s"Basic $twoPartsGood")
+    extraChecks(endpoint, encoder)
   }
 
   "Basic Auth Protection (password-only protection)" should {
+
+    def passwordPositiveChecks(endpoint: Action[AnyContent], encoder: BASE64Encoder) = {
+      val onePartGood = encoder.encode(s":$testPassword".getBytes)
+      verifyGetsAllowed(endpoint, s"basic $onePartGood")
+      verifyGetsAllowedUpperCaseAuthorizationHeader(endpoint, s"basic $onePartGood")
+      verifyGetsAllowed(endpoint, s"Basic $onePartGood")
+      verifyGetsAllowedUpperCaseAuthorizationHeader(endpoint, s"Basic $onePartGood")
+    }
 
     "allow sync endpoint, no request" in {
       val c = new Controller {
@@ -94,7 +103,7 @@ class BasicAuthProtectedSpec extends PlaySpecification {
         }
       }
 
-      verifyEndpoint(c.endpoint)
+      verifyEndpoint(c.endpoint, passwordPositiveChecks)
     }
 
     "allow sync endpoint, request" in {
@@ -104,7 +113,7 @@ class BasicAuthProtectedSpec extends PlaySpecification {
         }
       }
 
-      verifyEndpoint(c.endpoint)
+      verifyEndpoint(c.endpoint, passwordPositiveChecks)
     }
 
     "allow async endpoint, no request" in {
@@ -114,7 +123,7 @@ class BasicAuthProtectedSpec extends PlaySpecification {
         }
       }
 
-      verifyEndpoint(c.endpoint)
+      verifyEndpoint(c.endpoint, passwordPositiveChecks)
     }
 
     "allow async endpoint, request" in {
@@ -124,11 +133,19 @@ class BasicAuthProtectedSpec extends PlaySpecification {
         }
       }
 
-      verifyEndpoint(c.endpoint)
+      verifyEndpoint(c.endpoint, passwordPositiveChecks)
     }
   }
 
   "Basic Auth Protection (username-only protection)" should {
+
+    def usernamePositiveChecks(endpoint: Action[AnyContent], encoder: BASE64Encoder) = {
+      val onePartGood = encoder.encode(s"$testUsername:".getBytes)
+      verifyGetsAllowed(endpoint, s"basic $onePartGood")
+      verifyGetsAllowedUpperCaseAuthorizationHeader(endpoint, s"basic $onePartGood")
+      verifyGetsAllowed(endpoint, s"Basic $onePartGood")
+      verifyGetsAllowedUpperCaseAuthorizationHeader(endpoint, s"Basic $onePartGood")
+    }
 
     "allow sync endpoint, no request" in {
       val c = new Controller {
@@ -137,7 +154,8 @@ class BasicAuthProtectedSpec extends PlaySpecification {
         }
       }
 
-      verifyEndpoint(c.endpoint)
+      verifyEndpoint(c.endpoint, usernamePositiveChecks)
+
     }
 
     "allow sync endpoint, request" in {
@@ -147,7 +165,7 @@ class BasicAuthProtectedSpec extends PlaySpecification {
         }
       }
 
-      verifyEndpoint(c.endpoint)
+      verifyEndpoint(c.endpoint, usernamePositiveChecks)
     }
 
     "allow async endpoint, no request" in {
@@ -157,7 +175,7 @@ class BasicAuthProtectedSpec extends PlaySpecification {
         }
       }
 
-      verifyEndpoint(c.endpoint)
+      verifyEndpoint(c.endpoint, usernamePositiveChecks)
     }
 
     "allow async endpoint, request" in {
@@ -167,12 +185,20 @@ class BasicAuthProtectedSpec extends PlaySpecification {
         }
       }
 
-      verifyEndpoint(c.endpoint)
+      verifyEndpoint(c.endpoint, usernamePositiveChecks)
     }
   }
 
-  "Basic Auth Protection (username-and-password  protection)" should {
+  "Basic Auth Protection (username-and-password protection)" should {
 
+    def usernamePasswordPositiveChecks(endpoint: Action[AnyContent], encoder: BASE64Encoder) = {
+      val twoPartsGood = encoder.encode(s"$testUsername:$testPassword".getBytes)
+      verifyGetsAllowed(endpoint, s"basic $twoPartsGood")
+      verifyGetsAllowedUpperCaseAuthorizationHeader(endpoint, s"basic $twoPartsGood")
+
+      verifyGetsAllowed(endpoint, s"Basic $twoPartsGood")
+      verifyGetsAllowedUpperCaseAuthorizationHeader(endpoint, s"Basic $twoPartsGood")
+    }
     "allow sync endpoint, no request" in {
       val c = new Controller {
         val endpoint = UsernamePasswordProtected(testUsername, testPassword) {
@@ -180,7 +206,7 @@ class BasicAuthProtectedSpec extends PlaySpecification {
         }
       }
 
-      verifyEndpoint(c.endpoint)
+      verifyEndpoint(c.endpoint, usernamePasswordPositiveChecks)
     }
 
     "allow sync endpoint, request" in {
@@ -190,7 +216,7 @@ class BasicAuthProtectedSpec extends PlaySpecification {
         }
       }
 
-      verifyEndpoint(c.endpoint)
+      verifyEndpoint(c.endpoint, usernamePasswordPositiveChecks)
     }
 
     "allow async endpoint, no request" in {
@@ -200,7 +226,7 @@ class BasicAuthProtectedSpec extends PlaySpecification {
         }
       }
 
-      verifyEndpoint(c.endpoint)
+      verifyEndpoint(c.endpoint, usernamePasswordPositiveChecks)
     }
 
     "allow async endpoint, request" in {
@@ -210,7 +236,7 @@ class BasicAuthProtectedSpec extends PlaySpecification {
         }
       }
 
-      verifyEndpoint(c.endpoint)
+      verifyEndpoint(c.endpoint, usernamePasswordPositiveChecks)
     }
   }
 }

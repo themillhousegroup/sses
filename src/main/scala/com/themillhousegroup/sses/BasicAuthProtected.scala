@@ -32,13 +32,13 @@ object BasicAuthProtected {
   private def extractEncodedAuthString(basicAuthSt:String): Option[(String, String)] = {
     //BASE64Decoder is not thread safe, don't make it a field of this object
     val decoder = new BASE64Decoder()
-    val decodedAuthSt = new String(decoder.decodeBuffer(basicAuthSt), "UTF-8")
+    val decodedAuthSt = new String(decoder.decodeBuffer(basicAuthSt), "UTF-8").trim
     val usernamePassword = decodedAuthSt.split(":")
-    if (usernamePassword.length >= 2) {
-      //account for ":" in passwords
-      Some(usernamePassword(0), usernamePassword.splitAt(1)._2.mkString)
-    } else {
-      None
+    usernamePassword.length match {
+      case many if (many >= 2) => Some(usernamePassword(0), usernamePassword.splitAt(1)._2.mkString)
+      case 1 if (decodedAuthSt.indexOf(":") > 0) => Some(usernamePassword.head, "")
+      case 1 if (decodedAuthSt.indexOf(":") == 0) => Some("", usernamePassword.head)
+      case _ => None
     }
   }
 }
