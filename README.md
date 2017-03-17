@@ -34,7 +34,7 @@ Once you have __sses__ added to your project, you can start using it like this:
 
 Take your existing unprotected endpoint(s), that might look like this:
 
-```
+```scala
 def showFoo(fooId: String) = Action {
 
   // Some code, returning a Result
@@ -57,7 +57,7 @@ def storeBaz = Action.async(parse.json) { request =>
 
 Add the import, and your desired protection (username-only, password-only or both). You can still use all of the nice `Action` features like `.async` and `(parse.json)` etc:
 
-```
+```scala
 import com.themillhousegroup.sses._
 
 
